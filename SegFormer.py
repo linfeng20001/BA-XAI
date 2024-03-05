@@ -1,21 +1,24 @@
-import cv2
-import supervision as sv
-import numpy as np
 import matplotlib.pyplot as plt
 import csv
-import cv2
 from PIL import Image
+import math
+import os
 
-# "C:\Unet\saved img\Jungle\IMG\center_2024_03_01_13_46_05_282.png"
-image_path = '/mnt/c/Unet/saved img/Jungle/IMG/road_2024_03_01_13_46_05_282.png'
-image_bgr = cv2.imread(image_path)
-SAVING_PATH = '/mnt/c/Unet/saved mask/'
-
-# "C:\Unet\saved img\Jungle\driving_log.csv"
 # Pfad zur CSV-Datei
 csv_datei_pfad = "/mnt/c/Unet/saved img/Jungle/driving_log.csv"
+SAVING_PATH = '/mnt/c/Unet/saved mask/'
 
-# Mit einem for loop durch jedes Bildpaar iterieren
+
+def color_difference(pixel1, pixel2):
+    r1, g1, b1 = pixel1
+    r2, g2, b2 = pixel2
+    return math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2)
+
+
+def is_color_difference_greater(mask_pixel_value, original_pixel_value, threshold=80):
+    return color_difference(mask_pixel_value, original_pixel_value) > threshold
+
+
 with open(csv_datei_pfad, "r") as csvfile:
     csv_reader = csv.reader(csvfile)
     for row in csv_reader:
@@ -26,27 +29,24 @@ with open(csv_datei_pfad, "r") as csvfile:
 
         originalIMG = Image.open(image1_path)
         maskIMG = Image.open(image2_path)
-        #originalIMG = originalIMG.resize((640,320))
-        #maskIMG = maskIMG.resize((640, 320))
+
         print(originalIMG.size)
         width, height = originalIMG.size
         resultIMG = Image.new(originalIMG.mode, (width, height))
-        #background color = (0, 255, 1)
+        # background color = (0, 255, 1)
+
         for y in range(height):
             for x in range(width):
                 original_pixel_value = originalIMG.getpixel((x, y))
                 mask_pixel_value = maskIMG.getpixel((x, y))
-                if mask_pixel_value == (0, 255, 1): resultIMG.putpixel((x, y), original_pixel_value)
-                if mask_pixel_value == original_pixel_value: resultIMG.putpixel((x, y), mask_pixel_value)
-                else:resultIMG.putpixel((x, y), (0, 255, 1))
 
-
-                '''
-                if original_pixel_value == (57, 63, 53):
-                    resultIMG.putpixel((x, y), original_pixel_value)
-                print(original_pixel_value)
-                '''
-
+                if mask_pixel_value != (0, 255, 1) and is_color_difference_greater(mask_pixel_value,
+                                                                                   original_pixel_value):
+                    resultIMG.putpixel((x, y), (0, 255, 1))
+                else:
+                    resultIMG.putpixel((x, y), mask_pixel_value)
+                # turn the road to color red
+                if resultIMG.getpixel((x, y)) != (0, 255, 1): resultIMG.putpixel((x, y), (255, 0, 1))
 
         fig, axes = plt.subplots(1, 3)
         axes[0].imshow(originalIMG)
@@ -56,4 +56,8 @@ with open(csv_datei_pfad, "r") as csvfile:
         axes[2].imshow(resultIMG)
         axes[2].axis('off')
         plt.show()
-        exit()
+
+        filename = os.path.basename(image2_path)
+        result_path = os.path.join(SAVING_PATH, filename)
+        resultIMG.save(result_path)
+     
