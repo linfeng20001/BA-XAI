@@ -2,11 +2,8 @@ import csv
 import os
 from PIL import Image
 
-# Define input and output file paths
-#input_file = "/mnt/c/Unet/track1/normal/driving_log_Linux.csv" old simulation path
-#output_file = "/mnt/c/Unet/track1/normal/driving_log.csv"
 
-def csv_transformer(input_file, output_file):
+def csv_transformer_jpg(input_file, output_file):
     # Define the column headers
 
     column_headers = ["center", "left", "right", "steering", "throttle", "brake", "speed"]
@@ -25,9 +22,39 @@ def csv_transformer(input_file, output_file):
         # Iterate through each row in the input CSV file
         for row in reader:
             # Update file paths in the first three columns
-            updated_row = [col.replace("/home/linfeng/Pictures/IMG", "/mnt/c/Unet/track1/Lake_Day_Sun/IMG").replace('.png', '.jpg') if i < 3 else col for
-                           i, col
-                           in enumerate(row)]
+            updated_row = [
+                col.replace("C:/Unet/track1/normal/IMG", "/mnt/c/Unet/track1/Lake_Day_Sun/IMG").replace('.png',
+                                                                                                         '.jpg') if i < 3 else col
+                for
+                i, col
+                in enumerate(row)]
+            # Write the updated row to the output CSV file
+            writer.writerow(updated_row)
+
+
+def csv_transformer_png(input_file, output_file):
+    # Define the column headers
+
+    column_headers = ["center", "left", "right", "steering", "throttle", "brake", "speed"]
+
+    # Open the input and output files
+    with open(input_file, 'r') as f_in, open(output_file, 'w', newline='') as f_out:
+        reader = csv.reader(f_in)
+        writer = csv.writer(f_out)
+
+        # Write the column headers to the output CSV file
+        writer.writerow(column_headers)
+
+        # Skip the header row in the input CSV file
+        next(reader)
+
+        # Iterate through each row in the input CSV file
+        for row in reader:
+            # Update file paths in the first three columns
+            updated_row = [
+                col.replace("C:\\simulation\\IMG\\", "/mnt/c/Unet/track1/reverse/IMG/") if i < 3 else col for
+                i, col
+                in enumerate(row)]
             # Write the updated row to the output CSV file
             writer.writerow(updated_row)
 
@@ -59,24 +86,60 @@ def convert_png_to_jpg(input_folder):
     print("Conversion complete.")
 
 
-
-def remove_last_three(csv_path, output_path):
+def remove_last_four(csv_path, output_path):
     with open(csv_path, 'r') as infile:
         reader = csv.reader(infile)
         header = next(reader)
         data = [header]  # Keep the header
 
         for row in reader:
-            data.append(row[:-3])
+            data.append(row[:-4])
+
 
     with open(output_path, 'w', newline='') as outfile:
         writer = csv.writer(outfile)
         writer.writerows(data)
 
+def transform_comma2_period(input_csv, output_csv):
+    with open(input_csv, 'r', newline='') as infile:
+        reader = csv.reader(infile)
+        header = next(reader)
+        data = [header]
+
+        for row in reader:
+            num_elements = len(row)
+            print(num_elements)
+
+
+            last_two_elements = '.'.join(row[-2:])
+            fourth_and_fifth_elements = '.'.join(row[3:5])
+
+            if num_elements == 10:
+                sixth_and_seventh_elements = '.'.join(row[5:7])
+                modified_row = row[0:3] + [fourth_and_fifth_elements] + [sixth_and_seventh_elements] + row[7:8] + [last_two_elements]
+            elif num_elements == 9:
+                modified_row = row[0:3] + [fourth_and_fifth_elements] + row[5:-2] + [last_two_elements]
+            elif num_elements == 8:
+                modified_row = row[0:-2] + [last_two_elements]
+
+            data.append(modified_row)
+
+    # Write the data to the output CSV file
+    with open(output_csv, 'w', newline='') as outfile:
+        writer = csv.writer(outfile)
+        writer.writerows(data)
+
+
+def transform(input_path, output_path):
+    csv_transformer_png(input_path, output_path)
+    remove_last_four(output_path, output_path)
+    transform_comma2_period(output_path,output_path)
+
+    print("finish transform")
+
+
 if __name__ == '__main__':
-    input_path_csv = "/mnt/c/Unet/track1/Lake_Day_Sun/driving_log_Linux.csv"
-    output_path_csv = "/mnt/c/Unet/track1/Lake_Day_Sun/driving_log.csv"
+    input_path_csv = "/mnt/c/Unet/track1/reverse/driving_log_Linux.csv"
+    output_path_csv = "/mnt/c/Unet/track1/reverse/driving_log.csv"
     input_folder = "/mnt/c/Unet/track1/Lake_Day_Sun/IMG"
-    #convert_png_to_jpg(input_folder)
-    #csv_transformer(input_path_csv,output_path_csv)
-    remove_last_three(output_path_csv,output_path_csv)
+    transform(input_path_csv, output_path_csv)
