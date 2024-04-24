@@ -12,11 +12,11 @@ from utils.loss import BCEDiceLoss  # Ensure BCEDiceLoss is imported from the co
 from trainmodel.trainer import Trainer  # Ensure Trainer is imported from the correct file
 
 # Set the training hyperparameters
-datadir = "/mnt/c/Unet/Dataset"
+datadir = "/mnt/c/Unet/new_dataset"
 #datadir = "C:/Users/Linfe/OneDrive/Desktop/Seg/Dataset"
 batch_size = 4
 lr = 0.001
-epochs = 3
+epochs = 25
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Initialize the dataset and dataloader
@@ -28,7 +28,7 @@ val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, n
 
 # Initialize the model
 #model = Unet(num_classes=12, input_channels=3, num_filters=32, Dropout=0.3, res_blocks_dec=True)
-model = U_Net(3, 12)
+model = U_Net(3, 2)
 model.to(device)
 
 # Choose the optimizer and loss function

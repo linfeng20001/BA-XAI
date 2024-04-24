@@ -5,8 +5,8 @@ import math
 import os
 
 # Pfad zur CSV-Datei
-csv_datei_pfad = "/mnt/c/Unet/saved img/Jungle/driving_log.csv"
-SAVING_PATH = '/mnt/c/Unet/saved mask/'
+csv_datei_pfad = "/mnt/c/Unet/saved img/Moun/driving_log.csv"
+SAVING_PATH = '/mnt/c/Unet/saved mask moun/'
 
 
 def color_difference(pixel1, pixel2):
@@ -15,7 +15,7 @@ def color_difference(pixel1, pixel2):
     return math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2)
 
 
-def is_color_difference_greater(mask_pixel_value, original_pixel_value, threshold=80):
+def is_color_difference_greater(mask_pixel_value, original_pixel_value, threshold=170):
     return color_difference(mask_pixel_value, original_pixel_value) > threshold
 
 
@@ -27,10 +27,13 @@ with open(csv_datei_pfad, "r") as csvfile:
         image2_path = row[3].strip().replace("\\", "/").replace("C:/Coding",
                                                                 "/mnt/c/Unet")  # Remove any leading/trailing whitespace
 
+        #image1_path = '/mnt/c/Unet/saved img/Jungle/IMG/center_2024_03_01_13_46_16_128.png'
+        #image2_path =  '/mnt/c/Unet/saved img/Jungle/IMG/road_2024_03_01_13_46_16_128.png'
+
         originalIMG = Image.open(image1_path)
         maskIMG = Image.open(image2_path)
 
-        print(originalIMG.size)
+
         width, height = originalIMG.size
         resultIMG = Image.new(originalIMG.mode, (width, height))
         # background color = (0, 255, 1)
@@ -48,6 +51,7 @@ with open(csv_datei_pfad, "r") as csvfile:
                 # turn the road to color red
                 if resultIMG.getpixel((x, y)) != (0, 255, 1): resultIMG.putpixel((x, y), (255, 0, 1))
 
+        '''
         fig, axes = plt.subplots(1, 3)
         axes[0].imshow(originalIMG)
         axes[0].axis('off')
@@ -56,8 +60,13 @@ with open(csv_datei_pfad, "r") as csvfile:
         axes[2].imshow(resultIMG)
         axes[2].axis('off')
         plt.show()
+        '''
 
         filename = os.path.basename(image2_path)
         result_path = os.path.join(SAVING_PATH, filename)
         resultIMG.save(result_path)
-     
+
+
+
+
+print('done')
