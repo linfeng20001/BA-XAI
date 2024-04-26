@@ -1,0 +1,78 @@
+Mono path[0] = '/mnt/c/UdaCity/Builds/udacity_Data/Managed'
+Mono config path = '/mnt/c/UdaCity/Builds/udacity_Data/MonoBleedingEdge/etc'
+Preloaded 'lib_burst_generated.so'
+Found 1 interfaces on host : 0) 172.21.114.193
+Player connection [140037207420800] Multi-casting "[IP] 172.21.114.193 [Port] 55000 [Flags] 2 [Guid] 4145111673 [EditorId] 1230860905 [Version] 1048832 [Id] LinuxPlayer(13,172.21.114.193) [Debug] 0 [PackageName] LinuxPlayer [ProjectName] self_driving_car_nanodegree_program" to [225.0.0.222:54997]...
+
+Display 0 'default 42"': 3840x1080 (primary device).
+[Physics::Module] Initialized MultithreadedJobDispatcher with 15 workers.
+Unable to load player prefs
+Desktop is 3840 x 1080 @ 0 Hz
+[Vulkan init] extensions: count=20
+[Vulkan init] extensions: name=VK_EXT_acquire_drm_display [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_EXT_acquire_xlib_display [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_EXT_debug_report [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_EXT_debug_utils [enabled=1, external=0]
+[Vulkan init] extensions: name=VK_EXT_direct_mode_display [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_EXT_display_surface_counter [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_EXT_swapchain_colorspace [enabled=1, external=0]
+[Vulkan init] extensions: name=VK_KHR_device_group_creation [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_KHR_display [enabled=1, external=0]
+[Vulkan init] extensions: name=VK_KHR_external_fence_capabilities [enabled=1, external=0]
+[Vulkan init] extensions: name=VK_KHR_external_memory_capabilities [enabled=1, external=0]
+[Vulkan init] extensions: name=VK_KHR_external_semaphore_capabilities [enabled=1, external=0]
+[Vulkan init] extensions: name=VK_KHR_get_display_properties2 [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_KHR_get_physical_device_properties2 [enabled=1, external=0]
+[Vulkan init] extensions: name=VK_KHR_get_surface_capabilities2 [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_KHR_surface [enabled=1, external=0]
+[Vulkan init] extensions: name=VK_KHR_surface_protected_capabilities [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_KHR_wayland_surface [enabled=1, external=0]
+[Vulkan init] extensions: name=VK_KHR_xcb_surface [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_KHR_xlib_surface [enabled=1, external=0]
+Vulkan detection: 2
+Initialize engine version: 2022.3.19f1 (244b723c30a6)
+[Subsystems] Discovering subsystems at path /mnt/c/UdaCity/Builds/udacity_Data/UnitySubsystems
+GfxDevice: creating device client; threaded=1; jobified=0
+[Vulkan init] extensions: count=20
+[Vulkan init] extensions: name=VK_EXT_acquire_drm_display [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_EXT_acquire_xlib_display [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_EXT_debug_report [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_EXT_debug_utils [enabled=1, external=0]
+[Vulkan init] extensions: name=VK_EXT_direct_mode_display [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_EXT_display_surface_counter [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_EXT_swapchain_colorspace [enabled=1, external=0]
+[Vulkan init] extensions: name=VK_KHR_device_group_creation [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_KHR_display [enabled=1, external=0]
+[Vulkan init] extensions: name=VK_KHR_external_fence_capabilities [enabled=1, external=0]
+[Vulkan init] extensions: name=VK_KHR_external_memory_capabilities [enabled=1, external=0]
+[Vulkan init] extensions: name=VK_KHR_external_semaphore_capabilities [enabled=1, external=0]
+[Vulkan init] extensions: name=VK_KHR_get_display_properties2 [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_KHR_get_physical_device_properties2 [enabled=1, external=0]
+[Vulkan init] extensions: name=VK_KHR_get_surface_capabilities2 [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_KHR_surface [enabled=1, external=0]
+[Vulkan init] extensions: name=VK_KHR_surface_protected_capabilities [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_KHR_wayland_surface [enabled=1, external=0]
+[Vulkan init] extensions: name=VK_KHR_xcb_surface [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_KHR_xlib_surface [enabled=1, external=0]
+[Vulkan init] SelectPhysicalDevice requestedDeviceIndex=-1 xrDevice=(nil)
+[Vulkan init] Physical Device 0xba8b70 [0]: "llvmpipe (LLVM 15.0.7, 256 bits)" deviceType=4 vendorID=10005 deviceID=0
+[Vulkan init] Selected physical device (nil)
+[Vulkan init] Could not select a physical device
+GfxDevice: creating device client; threaded=1; jobified=0
+Unable to find a supported OpenGL core profile
+Unable to find a supported OpenGL core profile
+PlayerInitEngineGraphics: InitializeEngineGraphics failed
+Failed to initialize player
+Caught fatal signal - signo:11 code:1 errno:0 addr:(nil)
+Obtained 11 stack frames.
+#0  0x007f5cf405f520 in __sigaction
+#1  0x007f5cf5cd0076 in PhysicsModule::GetDefaultPhysicsSceneHandle() const
+#2  0x007f5cf595f9eb in UnityScene::~UnityScene()
+#3  0x007f5cf595bcc9 in RuntimeSceneManager::~RuntimeSceneManager()
+#4  0x007f5cf595b6a5 in StaticDestroyRuntimeSceneManager(void*)
+#5  0x007f5cf5b9e04f in RegisterRuntimeInitializeAndCleanup::ExecuteCleanup()
+#6  0x007f5cf58e67c5 in RuntimeCleanup()
+#7  0x007f5cf5e61269 in PlayerMain(int, char**)
+#8  0x007f5cf4046d90 in __libc_init_first
+#9  0x007f5cf4046e40 in __libc_start_main
+#10 0x00000000201029 in _start
