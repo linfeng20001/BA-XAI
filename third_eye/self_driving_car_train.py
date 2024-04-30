@@ -12,7 +12,7 @@ from tensorflow.keras.optimizers import Adam
 
 from config import Config
 from self_driving_car_batch_generator import Generator
-from utils import get_driving_styles
+from utils import get_driving_styles, mapping, mappingrgb
 from utils_models import *
 
 np.random.seed(0)
@@ -106,6 +106,7 @@ def train_model(model, cfg, x_train, x_test, y_train, y_test):
     x_test, y_test = shuffle(x_test, y_test, random_state=0)
 
     train_generator = Generator(x_train, y_train, True, cfg)
+
     val_generator = Generator(x_test, y_test, False, cfg)
 
     history = model.fit(train_generator,
@@ -131,22 +132,38 @@ def train_model(model, cfg, x_train, x_test, y_train, y_test):
 
     # save the last model anyway (might not be the best)
     model.save(name)
+def seg_process(model, x_train, x_test, y_train, y_test, cfg):
+    x_train, y_train = shuffle(x_train, y_train, random_state=0)
+    x_test, y_test = shuffle(x_test, y_test, random_state=0)
 
+    train_generator = Generator(x_train, y_train, True, cfg)
 
+    val_generator = Generator(x_test, y_test, False, cfg)
+    return train_generator, val_generator
 def main():
+    from models.model2 import U_Net
+    import torch
     """
     Load train/validation data_nominal set and train the model
     """
     cfg = Config()
     cfg.from_pyfile("config_my.py")
-
+    ####################
+    Seg_model = U_Net(3, 2)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    checkpoint_path = '/mnt/c/Unet/SegmentationModel.pth'
+    Seg_model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+    Seg_model.eval()
+    ####################
     x_train, x_test, y_train, y_test = load_data(cfg)
+    print(x_train)
 
     model = build_model(cfg.SDC_MODEL_NAME, cfg.USE_PREDICTIVE_UNCERTAINTY)
+    #this method use segmentation model to limitate the road
+    train_generator, val_generator = seg_process(Seg_model, x_train, x_test, y_train, y_test, cfg)
 
     train_model(model, cfg, x_train, x_test, y_train, y_test)
  
 
 if __name__ == '__main__':
-
     main()
