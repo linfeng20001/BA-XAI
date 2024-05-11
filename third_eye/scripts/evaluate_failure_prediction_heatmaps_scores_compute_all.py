@@ -12,8 +12,8 @@ if __name__ == '__main__':
     cfg = Config()
     cfg.from_pyfile(filename="/mnt/c/Unet/ThirdEye/ase22/config_my.py")
 
-    for condition in ['icse20', 'mutants', 'ood']:
-        simulations = natsorted(glob.glob('simulations/' + condition + '/*'))
+    for condition in ['icse20', 'mutants']:
+        simulations = natsorted(glob.glob('/mnt/c/Users/Linfe/Downloads/data-ASE2022/benchmark' + condition + '/*'))
 
         for ht in ['smoothgrad']:
 

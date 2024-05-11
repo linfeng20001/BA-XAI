@@ -61,7 +61,7 @@ def rgb2yuv(image):
     """
     Convert the image from RGB to YUV (This is what the NVIDIA model does)
     """
-    return cv2.cvtColor(image.astype('uint8') * 255, cv2.COLOR_RGB2YUV)
+    return cv2.cvtColor((image * 255).astype('uint8') , cv2.COLOR_RGB2YUV)
 
 
 def preprocess(image):
@@ -390,6 +390,7 @@ def plot_reconstruction_losses(losses, new_losses, name, threshold, new_threshol
         print("crashed column not present in the csv")
 
     if new_threshold is not None:
+
         plt.plot(x_threshold, [new_threshold] * len(x_threshold), color='red', alpha=0.4, label='new threshold')
 
     plt.plot(x_losses, losses, '-.', color='blue', alpha=0.7, label='original')
@@ -424,3 +425,5 @@ def load_autoencoder_from_disk():
 
     # TODO: manage the case in which the files do not exist
     return encoder, decoder
+
+

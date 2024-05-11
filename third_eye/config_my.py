@@ -6,7 +6,7 @@ TEST_SIZE = 0.2  # split of training data used for the validation set (keep it l
 
 # simulations settings
 TRACK = "track1"  # ["track1"|"track2"|"track3"|"track1","track2","track3"] the race track to use
-TRACK1_DRIVING_STYLES = ["reverse", "normal", "normal2", "normal3"] #["heatmaps-smoothgrad"]  # ["normal", "recovery", "reverse"]
+TRACK1_DRIVING_STYLES = ["normal", "normal2", "normal3", "normal4","normal5","normal6","reverse","recovery1","recovery2"] #["heatmaps-smoothgrad"]  # ["normal", "recovery", "reverse"]
 TRACK2_DRIVING_STYLES = ["normal"]  # , "recovery", "recovery2", "recovery3", "reverse", "sport_normal", "sport_reverse"]
 TRACK3_DRIVING_STYLES = ["normal"]  # , "recovery", "recovery2", "reverse", "sport_normal"]
 TRACK1_IMG_PER_LAP = 1140
@@ -15,8 +15,8 @@ TRACK3_IMG_PER_LAP = 1375
 
 # self-driving car model settings
 SDC_MODELS_DIR = "/mnt/c/Unet/"  # self-driving car models
-SDC_MODEL_NAME = "track1-udacity-dave2-001.h5"  # self-driving car model "dave2"|"chauffeur"|"epoch"|"commaai"
-NUM_EPOCHS_SDC_MODEL = 20  # training epochs for the self-driving car model
+SDC_MODEL_NAME = "udacity-dave2.h5"  # self-driving car model "dave2"|"chauffeur"|"epoch"|"commaai"
+NUM_EPOCHS_SDC_MODEL = 50  # training epochs for the self-driving car model
 # SAMPLES_PER_EPOCH = 100  # number of samples to process before going to the next epoch
 BATCH_SIZE = 128  # number of samples per gradient update
 SAVE_BEST_ONLY = True  # only saves when the model is considered the "best" according to the quantity monitored
@@ -26,9 +26,9 @@ NUM_SAMPLES_MC_DROPOUT = 20
 
 # Udacity simulation settings
 ANOMALY_DETECTOR_NAME = "track1-MSE-latent2"
-SIMULATION_NAME = 'self_driving_car_nanodegree_program'#"gauss-journal-track1-nominal"
-TESTING_DATA_DIR = "/mnt/c/simulation"  # Udacity simulations logs "C:/Unet/benchmark-ASE2022/"
-
+SIMULATION_NAME = 'gauss-journal-track1-nominal'##"gauss-journal-track1-nominal"'xai-track1-day-night'
+TESTING_DATA_DIR = '/mnt/c/Users/Linfe/Downloads/data-ASE2022/benchmark-ASE2022'#"/mnt/c/Unet/benchmark-ASE2022/"  # Udacity simulations logs "C:/Unet/benchmark-ASE2022/"
+#'/mnt/c/Users/Linfe/Downloads/data-ASE2022/benchmark'
 MAX_SPEED = 35  # car's max speed, capped at 35 mph (default)
 MIN_SPEED = 10  # car's min speed, capped at 10 mph (default)
 SAO_THRESHOLD = 500  # the SAO threshold

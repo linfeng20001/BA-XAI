@@ -222,7 +222,7 @@ def compute_tp_and_fn(data_df_anomalous, losses_on_anomalous, threshold, seconds
             undetectable_windows += 1
         else:
             crashed_anomalous_in_anomalous_conditions.loc[item - frames_to_reassign: item - frames_to_reassign_2] = 1
-            reaction_window = reaction_window.append(
+            reaction_window = reaction_window._append(
                 crashed_anomalous_in_anomalous_conditions[item - frames_to_reassign: item - frames_to_reassign_2])
 
             print("frames between %d and %d have been labelled as 1" % (

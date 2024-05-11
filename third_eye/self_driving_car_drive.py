@@ -194,10 +194,11 @@ if __name__ == '__main__':
     if "chauffeur" in cfg.SDC_MODEL_NAME:
         model = load_model(model_path, custom_objects={"rmse": rmse})
     elif "dave2" in cfg.SDC_MODEL_NAME or "epoch" in cfg.SDC_MODEL_NAME or "commaai" in cfg.SDC_MODEL_NAME:
+        model_path = "/mnt/c/Unet/udacity-dave2.h5"
+        #"C:\Unet\udacity-dave2.h5"
         model = load_model(model_path)
     else:
         print("cfg.SDC_MODEL_NAME option unknown. Exiting...")
-        exit()
     '''
     # load the self-assessment oracle model             
     encoder, decoder = utils.load_autoencoder_from_disk()
@@ -209,9 +210,6 @@ if __name__ == '__main__':
                             decoder=decoder)
     anomaly_detection.compile(optimizer=keras.optimizers.Adam(learning_rate=cfg.SAO_LEARNING_RATE))
     '''
-
-
-
     # create the output dir
     #cfg.TESTING_DATA_DIR = 'C:/Unet/Track1/reverse'
     if cfg.TESTING_DATA_DIR != '':

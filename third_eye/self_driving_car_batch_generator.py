@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 from tensorflow.keras.utils import Sequence
-
+import matplotlib.pyplot as plt
 from utils import RESIZED_IMAGE_HEIGHT, RESIZED_IMAGE_WIDTH, IMAGE_CHANNELS, load_image, augment, preprocess
 
 
@@ -34,11 +34,29 @@ class Generator(Sequence):
             else:
                 image = load_image(self.cfg.TRAINING_DATA_DIR + os.path.sep + self.cfg.TRAINING_SET_DIR, center)
 
+            #plt.imshow(image)
+            #plt.show()
             # add the image and steering angle to the batch
             images[i] = preprocess(image)
+            #plt.imshow(images[0])
+            #plt.show()
+
             steers[i] = steering_angle
 
         return images, steers
 
     def __len__(self):
         return len(self.path_to_pictures) // self.cfg.BATCH_SIZE
+
+if __name__ == '__main__':
+    from config import Config
+    from self_driving_car_train import load_data
+    from sklearn.utils import shuffle
+    cfg = Config()
+    cfg.from_pyfile("config_my.py")
+
+    x_train, x_test, y_train, y_test = load_data(cfg)
+    x_train, y_train = shuffle(x_train, y_train, random_state=0)
+    train_generator = Generator(x_train, y_train, True, cfg)
+
+    img, steer = train_generator.__getitem__(0)
