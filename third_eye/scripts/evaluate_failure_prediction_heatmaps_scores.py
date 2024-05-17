@@ -14,7 +14,6 @@ def get_threshold(losses, conf_level=0.95):
     # removing zeros
     losses = np.array(losses)
     losses_copy = losses[losses != 0]
-    print(losses_copy)
     shape, loc, scale = gamma.fit(losses_copy, floc=0)
 
     print("Creating threshold using the confidence intervals: %s" % conf_level)
@@ -28,8 +27,8 @@ def evaluate_failure_prediction(cfg, heatmap_type, simulation_name, summary_type
     print("Using aggregation mean" if aggregation_method is 'mean' else "Using aggregation max")
 
     # 1. load heatmap scores in nominal conditions
-    #type should be smoothgrad
 
+    cfg.SIMULATION_NAME = 'gauss-journal-track1-nominal'
     path = os.path.join(cfg.TESTING_DATA_DIR,
                         cfg.SIMULATION_NAME,
                         'htm-' + heatmap_type + '-scores' + summary_type + '.npy')
@@ -39,13 +38,12 @@ def evaluate_failure_prediction(cfg, heatmap_type, simulation_name, summary_type
                         cfg.SIMULATION_NAME,
                         'heatmaps-' + heatmap_type,
                         'driving_log.csv')
-
     data_df_nominal = pd.read_csv(path)
 
     data_df_nominal['loss'] = original_losses
 
     # 2. load heatmap scores in anomalous conditions
-    #load from mutation simulation
+
     path = os.path.join(cfg.TESTING_DATA_DIR,
                         simulation_name,
                         'htm-' + heatmap_type + '-scores' + summary_type + '.npy')
@@ -55,21 +53,13 @@ def evaluate_failure_prediction(cfg, heatmap_type, simulation_name, summary_type
                         simulation_name,
                         'heatmaps-' + heatmap_type,
                         'driving_log.csv')
-
-    #########################
-    path = os.path.join(cfg.TESTING_DATA_DIR,
-                        simulation_name,
-                        'driving_log.csv')
-    #########################
-
     data_df_anomalous = pd.read_csv(path)
     data_df_anomalous['loss'] = anomalous_losses
 
-    
     # 3. compute a threshold from nominal conditions, and FP and TN
     false_positive_windows, true_negative_windows, threshold = compute_fp_and_tn(data_df_nominal,
                                                                                  aggregation_method,
-                                                                                 'icse20')
+                                                                                 condition)
 
     # 4. compute TP and FN using different time to misbehaviour windows
     for seconds in range(1, 4):
@@ -81,11 +71,11 @@ def evaluate_failure_prediction(cfg, heatmap_type, simulation_name, summary_type
                                                                                                 condition)
 
         if true_positive_windows != 0:
-            precision = true_positive_windows / (true_positive_windows + false_positive_windows) # fp  model predicts a negative instance as positive. präzision
-            recall = true_positive_windows / (true_positive_windows + false_negative_windows)       #Ein hoher Recall bedeutet, dass das Modell eine hohe Fähigkeit hat, tatsächlich positive Instanzen zu identifizieren
-            accuracy = (true_positive_windows + true_negative_windows) / (      #genauigkeit
+            precision = true_positive_windows / (true_positive_windows + false_positive_windows)
+            recall = true_positive_windows / (true_positive_windows + false_negative_windows)
+            accuracy = (true_positive_windows + true_negative_windows) / (
                     true_positive_windows + true_negative_windows + false_positive_windows + false_negative_windows)
-            fpr = false_positive_windows / (false_positive_windows + true_negative_windows)             #False Positive Rate
+            fpr = false_positive_windows / (false_positive_windows + true_negative_windows)
 
             if precision != 0 or recall != 0:
                 f3 = true_positive_windows / (
@@ -104,7 +94,6 @@ def evaluate_failure_prediction(cfg, heatmap_type, simulation_name, summary_type
                 print("Recall: undefined")
                 print("F-3: undefined\n")
         else:
-            print('tp is 0')
             precision = recall = f3 = accuracy = fpr = 0
             print("Accuracy: undefined")
             print("False Positive Rate: undefined")
@@ -188,7 +177,6 @@ def compute_tp_and_fn(data_df_anomalous, losses_on_anomalous, threshold, seconds
 
     # creates the ground truth
     all_first_frame_position_crashed_sequences = []
-    #print(crashed_anomalous_in_anomalous_conditions.size) = 2231
     for idx, item in enumerate(crashed_anomalous_in_anomalous_conditions):
         if idx == number_frames_anomalous:  # we have reached the end of the file
             continue
@@ -198,7 +186,6 @@ def compute_tp_and_fn(data_df_anomalous, losses_on_anomalous, threshold, seconds
             first_index_crash = idx + 1
             all_first_frame_position_crashed_sequences.append(first_index_crash)
             # print("first_index_crash: %d" % first_index_crash)
-
 
     print("identified %d crash(es)" % len(all_first_frame_position_crashed_sequences))
     print(all_first_frame_position_crashed_sequences)
@@ -222,7 +209,7 @@ def compute_tp_and_fn(data_df_anomalous, losses_on_anomalous, threshold, seconds
             undetectable_windows += 1
         else:
             crashed_anomalous_in_anomalous_conditions.loc[item - frames_to_reassign: item - frames_to_reassign_2] = 1
-            reaction_window = reaction_window._append(
+            reaction_window = reaction_window.append(
                 crashed_anomalous_in_anomalous_conditions[item - frames_to_reassign: item - frames_to_reassign_2])
 
             print("frames between %d and %d have been labelled as 1" % (
@@ -273,7 +260,6 @@ def compute_fp_and_tn(data_df_nominal, aggregation_method, condition):
         data_df_nominal = data_df_nominal[:-num_to_delete]
 
     losses = pd.Series(data_df_nominal['loss'])
-
     sma_nominal = losses.rolling(fps_nominal, min_periods=1).mean()
 
     list_aggregated = []
@@ -303,7 +289,7 @@ def compute_fp_and_tn(data_df_nominal, aggregation_method, condition):
 
     assert len(list_aggregated) == num_windows_nominal
     threshold = get_threshold(list_aggregated, conf_level=0.95)
-    #threshold = 1.0
+
     false_positive_windows = len([i for i in list_aggregated if i > threshold])
     true_negative_windows = len([i for i in list_aggregated if i <= threshold])
 

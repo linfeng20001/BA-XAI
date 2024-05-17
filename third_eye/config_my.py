@@ -14,7 +14,7 @@ TRACK2_IMG_PER_LAP = 1870
 TRACK3_IMG_PER_LAP = 1375
 
 # self-driving car model settings
-SDC_MODELS_DIR = "/mnt/c/Unet/"  # self-driving car models
+SDC_MODELS_DIR = "C:/Users/Linfe/Downloads/dave2_models"  # self-driving car models
 SDC_MODEL_NAME = "udacity-dave2.h5"  # self-driving car model "dave2"|"chauffeur"|"epoch"|"commaai"
 NUM_EPOCHS_SDC_MODEL = 50  # training epochs for the self-driving car model
 # SAMPLES_PER_EPOCH = 100  # number of samples to process before going to the next epoch
@@ -27,8 +27,9 @@ NUM_SAMPLES_MC_DROPOUT = 20
 # Udacity simulation settings
 ANOMALY_DETECTOR_NAME = "track1-MSE-latent2"
 SIMULATION_NAME = 'gauss-journal-track1-nominal'##"gauss-journal-track1-nominal"'xai-track1-day-night'
-TESTING_DATA_DIR = '/mnt/c/Users/Linfe/Downloads/data-ASE2022/benchmark-ASE2022'#"/mnt/c/Unet/benchmark-ASE2022/"  # Udacity simulations logs "C:/Unet/benchmark-ASE2022/"
-#'/mnt/c/Users/Linfe/Downloads/data-ASE2022/benchmark'
+TESTING_DATA_DIR = 'C:/Users/Linfe/Downloads/data-ASE2022/benchmark-ASE2022/mutants'#C:/Users/Linfe/Downloads/data-ASE2022/benchmark-ASE2022'
+#TESTING_DATA_DIR ="/mnt/c/Unet/benchmark-ASE2022/"  # Udacity simulations logs "C:/Unet/benchmark-ASE2022/"
+
 MAX_SPEED = 35  # car's max speed, capped at 35 mph (default)
 MIN_SPEED = 10  # car's min speed, capped at 10 mph (default)
 SAO_THRESHOLD = 500  # the SAO threshold

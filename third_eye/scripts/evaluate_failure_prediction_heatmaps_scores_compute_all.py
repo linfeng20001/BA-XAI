@@ -10,11 +10,13 @@ if __name__ == '__main__':
     os.chdir(os.getcwd().replace('scripts', ''))
 
     cfg = Config()
-    cfg.from_pyfile(filename="/mnt/c/Unet/ThirdEye/ase22/config_my.py")
+    cfg.from_pyfile(filename="C:/Unet/ThirdEye/ase22/config_my.py")
 
-    for condition in ['icse20', 'mutants']:
-        simulations = natsorted(glob.glob('/mnt/c/Users/Linfe/Downloads/data-ASE2022/benchmark' + condition + '/*'))
+    for condition in ['mutants']: #'icse20', 'mutants',
+        simulations = natsorted(glob.glob('C:/Users/Linfe/Downloads/data-ASE2022/benchmark-ASE2022' + condition + '/*'))
 
+        simulations = natsorted(glob.glob('C:/Users/Linfe/Downloads/mutants/mutants/*'))
+        print(simulations)
         for ht in ['smoothgrad']:
 
             for st in ['-avg', '-avg-grad']:

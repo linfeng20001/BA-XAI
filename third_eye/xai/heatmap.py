@@ -1,10 +1,4 @@
-import glob
-import os
-from pathlib import Path
-
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import tensorflow.python.keras.models
 from tf_keras_vis.gradcam_plus_plus import GradcamPlusPlus
 from tf_keras_vis.saliency import Saliency
@@ -12,7 +6,7 @@ from tqdm import tqdm
 
 import torch
 from models.model2 import U_Net
-from PIL import Image
+
 import torchvision.transforms.functional as TF
 from torchvision import transforms
 
@@ -30,38 +24,33 @@ def preprocessForSegmentation(img):
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
     image = normalize(image)
-    image = image.to('cuda')
+    image = image.to('cpu')
     image = image.unsqueeze(0)
     return image
-'''
-for pixel in getPixels(original_image):
-class = getClass(pixel, segmentation_map)
-attention += getAttention(pixel, attention_heatmap)
-global_attention += attention
-if class == ROAD:
-road_attention += attention
 
-print(road_attention // global_attention * 100) # percentage of attention given to the road.
-'''
-#TODO rewrite
-# [  0   0 255]street [  0 255   0]background
-# only street attention are relevant
-def MultiplicativeCombination(saliency_map, predicted_rgb):
+
+def merge(saliency_map, predicted_rgb):
+    saliency_map_seg = saliency_map
     global_attention = road_attention = road_pixel = 0
     for x in range(saliency_map.shape[0]):
         for y in range(saliency_map.shape[1]):
-            global_attention += saliency_map[x, y]
+            global_attention += saliency_map_seg[x, y]
             if np.all(predicted_rgb[x, y] == [0, 255, 0]):
-                saliency_map[x, y] = 0
+                saliency_map_seg[x, y] = 0
 
     for x in range(saliency_map.shape[0]):
         for y in range(saliency_map.shape[1]):
-            if(saliency_map[x, y] != 0):
+            if saliency_map_seg[x, y] != 0:
                 road_pixel += 1
                 road_attention += saliency_map[x, y]
-    road_attention_average = road_attention/road_pixel
-    road_attention_percentage = road_attention/global_attention*100
-    return saliency_map, road_attention_average, road_attention_percentage
+    #In case of ads is crashed
+    if road_pixel == 0:
+        road_attention_average = 0
+    else:
+        road_attention_average = road_attention / road_pixel
+
+    road_attention_percentage = road_attention / global_attention * 100
+    return saliency_map_seg, road_attention_average, road_attention_percentage
 
 
 mapping = {
@@ -90,22 +79,19 @@ def class_to_rgb(mask):
     return rgbimg
 
 
-# heatmap and all the img will be saved in dataset5simulations and the csv is in asp benchmark
-# all the heatmap score are in asp benchmark
 def score_when_decrease(output):
     return -1.0 * output[:, 0]
 
 
-def compute_heatmap(cfg, simulation_name, attention_type="SmoothGrad"):
+def compute_heatmap(cfg, simulation_name, crop, if_resize, yuv, input_model, attention_type="SmoothGrad"):
     # prepare segmentation model
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = 'cpu'
     model = U_Net(3, 2)
     model.to(device)
 
-    checkpoint_path = '/mnt/c/Unet/SegmentationModel4.pth'
+    checkpoint_path = 'C:/Unet/temp/SegmentationModel_CrossEntropyLoss12.pth'
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     model.eval()
-
     """
     Given a simulation by Udacity, the script reads the corresponding image paths from the csv and creates a heatmap for
     each driving image. The heatmap is created with the SmoothGrad algorithm available from tf-keras-vis
@@ -117,19 +103,22 @@ def compute_heatmap(cfg, simulation_name, attention_type="SmoothGrad"):
 
     # load the image file paths from csv
 
-    path = os.path.join(cfg.TESTING_DATA_DIR,                       #"/mnt/c/Unet/benchmark-ASE2022/"
-                        simulation_name,                            #gauss-journal-track1-nominal
+    path = os.path.join(cfg.TESTING_DATA_DIR,  # "/mnt/c/Unet/benchmark-ASE2022/"
+                        simulation_name,  # gauss-journal-track1-nominal
                         'driving_log.csv')
 
     data_df = pd.read_csv(path)
-    #data = data_df["center"]
-    data = data_df["center"].apply(lambda x: "/mnt/c/Unet/benchmark-ASE2022" + x.replace("simulations", ""))
+    # data = data_df["center"]
+    data = data_df["center"].apply(
+        lambda x: "C:/Users/Linfe/Downloads/data-ASE2022/benchmark-ASE2022" + x.replace("simulations", ""))
     print("read %d images from file" % len(data))
-    #########################################################
 
-    # load self-driving car model 
+    #########################################################
+    # load self-driving car model
+    path = cfg.SDC_MODELS_DIR + '/' + input_model
+    print(path)
     self_driving_car_model = tensorflow.keras.models.load_model(
-        Path(os.path.join(cfg.SDC_MODELS_DIR, cfg.SDC_MODEL_NAME)))
+        path)
     #########################################################
     # load attention model
     saliency = None
@@ -142,22 +131,40 @@ def compute_heatmap(cfg, simulation_name, attention_type="SmoothGrad"):
     avg_gradient_heatmaps = []
     list_of_image_paths = []
     total_time = 0
-    prev_hm = gradient = np.zeros((80, 160))
+    prev_hm = gradient = gradient_seg = prev_hm_seg = np.zeros((80, 160))
+
+    # make same copy for with segmentation
+    avg_heatmaps_seg = []
+    avg_gradient_heatmaps_seg = []
+    list_of_image_paths_seg = []
+    total_time = 0
+    prev_hm = gradient = gradient_seg = prev_hm_seg = np.zeros((80, 160))
 
     # create directory for the heatmaps
-    '''
     path_save_heatmaps = os.path.join(cfg.TESTING_DATA_DIR,
                                       simulation_name,
                                       "heatmaps-" + attention_type.lower(),
                                       "IMG")
-    
+
     if os.path.exists(path_save_heatmaps):
         print("Deleting folder at {}".format(path_save_heatmaps))
         shutil.rmtree(path_save_heatmaps)
     print("Creating image folder at {}".format(path_save_heatmaps))
     os.makedirs(path_save_heatmaps)
-    '''
-    path_save_heatmaps = '/mnt/c/Unet/dataset5simulations/heatmap'
+
+    path_save_heatmaps_seg = os.path.join(cfg.TESTING_DATA_DIR,
+                                      simulation_name,
+                                      "heatmaps-" + attention_type.lower() + '-seg',
+                                      "IMG")
+
+    if os.path.exists(path_save_heatmaps_seg):
+        print("Deleting folder at {}".format(path_save_heatmaps_seg))
+        shutil.rmtree(path_save_heatmaps_seg)
+    print("Creating image folder at {}".format(path_save_heatmaps_seg))
+    os.makedirs(path_save_heatmaps_seg)
+
+    # i did not safe the heatmap only
+
     for idx, img in enumerate(tqdm(data)):
         # img = "/mnt/c/Unet/dataset5" + img
 
@@ -168,21 +175,11 @@ def compute_heatmap(cfg, simulation_name, attention_type="SmoothGrad"):
         elif "\\" in img:
             img = img.replace("\\", "/")
 
-        # load image        x is for heatmap and y for segmentation
+        # load image: x is for heatmap and y for segmentation
         x = y = image = mpimg.imread(img)
-
-        # preprocess image why resize into 80 160 if model is tatking 160 320?
-        # x = utils.resize(x).astype('float32')
-        #x = utils.preprocess(x).astype('float32')
-        x = x.astype('float32')
-        #TODO need to preprocess and also preprocess segmask
-        #TODO evaluate score
-        #TODO old SDC model
-        #TODO new merge with preprocess
 
         y = preprocessForSegmentation(y)
 
-        # prediction is in tensor
         with torch.no_grad():
             prediction = model(y)
 
@@ -191,11 +188,26 @@ def compute_heatmap(cfg, simulation_name, attention_type="SmoothGrad"):
         predicted_rgb = class_to_rgb(maxindex).to('cpu')
         predicted_rgb = predicted_rgb.squeeze().permute(1, 2, 0).numpy()
 
+        if crop:
+            x = utils.crop(x)
+            predicted_rgb = utils.crop(predicted_rgb)
+        if if_resize:
+            x = utils.resize(x)
+            predicted_rgb = utils.resize(predicted_rgb)
+        else:
+            x = cv2.resize(x, (IMAGE_WIDTH, IMAGE_HEIGHT), cv2.INTER_AREA)
+            predicted_rgb = cv2.resize(predicted_rgb, (IMAGE_WIDTH, IMAGE_HEIGHT), cv2.INTER_AREA)
+        if yuv:
+            x = utils.rgb2yuv(x)
+
+        x = x.astype('float32')
+
         # compute heatmap image
         saliency_map = None
         if attention_type == "SmoothGrad":
             saliency_map = saliency(score_when_decrease, x, smooth_samples=20, smooth_noise=0.20)
 
+        average = np.average(saliency_map)
         # compute gradient of the heatmap
         if idx == 0:
             gradient = 0
@@ -205,10 +217,26 @@ def compute_heatmap(cfg, simulation_name, attention_type="SmoothGrad"):
         prev_hm = saliency_map
 
         saliency_map = np.squeeze(saliency_map)
+        # store the heatmaps
+        file_name = img.split('/')[-1]
+
+        file_name = "htm-" + attention_type.lower() + '-' + file_name
+        path_name = os.path.join(path_save_heatmaps, file_name)
+        mpimg.imsave(path_name, np.squeeze(saliency_map))
+
+        list_of_image_paths.append(path_name)
 
         # merge heatmap and saliency
-        saliency_map, average, percentage = MultiplicativeCombination(saliency_map, predicted_rgb)
-        print(percentage)
+        saliency_map_seg, road_attention_average, _ = merge(saliency_map, predicted_rgb)
+
+
+        if idx == 0:
+            gradient_seg = 0
+        else:
+            gradient_seg = abs(prev_hm_seg - saliency_map_seg)
+        average_gradient_seg = np.average(gradient_seg)
+        prev_hm_seg = saliency_map_seg
+
         '''
         fig, axes = plt.subplots(1, 3, figsize=(15, 5))  # Create a figure with three subplots
 
@@ -223,39 +251,61 @@ def compute_heatmap(cfg, simulation_name, attention_type="SmoothGrad"):
 
         plt.show()
 
-'''
-        # store the heatmaps
+        '''
+
+        #store seg heapmap
         file_name = img.split('/')[-1]
 
         file_name = "htm-" + attention_type.lower() + '-' + file_name
-        path_name = os.path.join(path_save_heatmaps, file_name)
-        # mpimg.imsave(path_name, np.squeeze(saliency_map))
+        path_name = os.path.join(path_save_heatmaps_seg, file_name)
+        mpimg.imsave(path_name, saliency_map_seg)
 
-        list_of_image_paths.append(path_name)
+        list_of_image_paths_seg.append(path_name)
+
 
         avg_heatmaps.append(average)
         avg_gradient_heatmaps.append(average_gradient)
+        # store for seg avg
+        avg_heatmaps_seg.append(road_attention_average)
+        avg_gradient_heatmaps_seg.append(average_gradient_seg)
 
     # save scores as numpy arrays
     file_name = "htm-" + attention_type.lower() + '-scores'
     path_name = os.path.join(cfg.TESTING_DATA_DIR,
                              simulation_name,
-                             file_name + '-avg_withSeg')
+                             file_name + '-avg')
 
     np.save(path_name, avg_heatmaps)
+
+    file_name = "htm-" + attention_type.lower() + '-scores'
+    path_name = os.path.join(cfg.TESTING_DATA_DIR,
+                             simulation_name,
+                             file_name + '-avg_seg')
+
+    np.save(path_name, avg_heatmaps_seg)
 
     # plot scores as histograms
     plt.hist(avg_heatmaps)
     plt.title("average attention heatmaps")
     path_name = os.path.join(cfg.TESTING_DATA_DIR,
                              simulation_name,
-                             'plot-' + file_name + '-avg_withSeg.png')
+                             'plot-' + file_name + '-avg.png')
+    plt.savefig(path_name)
+    plt.show()
+    #seg part
+    plt.hist(avg_heatmaps_seg)
+    plt.title("average attention heatmaps seg")
+    path_name = os.path.join(cfg.TESTING_DATA_DIR,
+                             simulation_name,
+                             'plot-' + file_name + '-avg_seg.png')
     plt.savefig(path_name)
     plt.show()
 
+
+
     path_name = os.path.join(cfg.TESTING_DATA_DIR,
                              simulation_name,
-                             file_name + '-avg-grad_withSeg')
+                             file_name + '-avg-grad')
     np.save(path_name, avg_gradient_heatmaps)
 
     plt.clf()
@@ -263,24 +313,38 @@ def compute_heatmap(cfg, simulation_name, attention_type="SmoothGrad"):
     plt.title("average gradient attention heatmaps")
     path_name = os.path.join(cfg.TESTING_DATA_DIR,
                              simulation_name,
-                             'plot-' + file_name + '-avg-grad_withSeg.png')
+                             'plot-' + file_name + '-avg-grad.png')
+    plt.savefig(path_name)
+    plt.show()
+    #seg part
+    path_name = os.path.join(cfg.TESTING_DATA_DIR,
+                             simulation_name,
+                             file_name + '-avg-grad_seg')
+    np.save(path_name, avg_gradient_heatmaps_seg)
+
+    plt.clf()
+    plt.hist(avg_gradient_heatmaps_seg)
+    plt.title("average gradient attention heatmaps")
+    path_name = os.path.join(cfg.TESTING_DATA_DIR,
+                             simulation_name,
+                             'plot-' + file_name + '-avg-grad_seg.png')
     plt.savefig(path_name)
     plt.show()
 
 
-    '''
+
     # save as csv
     df = pd.DataFrame(list_of_image_paths, columns=['center'])
     path = os.path.join(cfg.TESTING_DATA_DIR,
                         simulation_name,
                         'driving_log.csv')
     data_df = pd.read_csv(path)
-    # data = data_df[["frameId", "time", "crashed"]]
-    data = data_df[["frameId", "crashed"]]
+    data = data_df[["frameId", "time", "crashed"]]
+    #data = data_df[["frameId", "crashed"]]
 
     # copy frame id, simulation time and crashed information from simulation's csv
     df['frameId'] = data['frameId'].copy()
-    # df['time'] = data['time'].copy()
+    df['time'] = data['time'].copy()
     df['crashed'] = data['crashed'].copy()
 
     # save it as a separate csv
@@ -289,11 +353,44 @@ def compute_heatmap(cfg, simulation_name, attention_type="SmoothGrad"):
                            "heatmaps-" + attention_type.lower(),
                            'driving_log.csv'), index=False)
 
-    '''
+    #seg
+    df = pd.DataFrame(list_of_image_paths_seg, columns=['center'])
+    path = os.path.join(cfg.TESTING_DATA_DIR,
+                        simulation_name,
+                        'driving_log.csv')
+    data_df = pd.read_csv(path)
+    data = data_df[["frameId", "time", "crashed"]]
+    # data = data_df[["frameId", "crashed"]]
+
+    # copy frame id, simulation time and crashed information from simulation's csv
+    df['frameId'] = data['frameId'].copy()
+    df['time'] = data['time'].copy()
+    df['crashed'] = data['crashed'].copy()
+
+    # save it as a separate csv
+    df.to_csv(os.path.join(cfg.TESTING_DATA_DIR,
+                           simulation_name,
+                           "heatmaps-" + attention_type.lower() + '-seg',
+                           'driving_log.csv'), index=False)
+
+
+
 if __name__ == '__main__':
     cfg = Config()
-    cfg.from_pyfile(filename="/mnt/c/Unet/ThirdEye/ase22/config_my.py")
-    simulation_name = 'mutants/udacity_add_weights_regularisation_mutated0_MP_l1_3_1'
+    cfg.from_pyfile(filename="C:/Unet/ThirdEye/ase22/config_my.py")
 
-    compute_heatmap(cfg, cfg.SIMULATION_NAME)
+    path = 'C:/Users/Linfe/Downloads/dave2_models/models.csv'
 
+    model_df = pd.read_csv(path)
+    simulation = model_df["model"]
+    if_crop = model_df["if_crop"]
+    if_resize = model_df["if_half_size"]
+    if_yue = model_df["if_yuv"]
+    input_model = model_df["treated_as"]
+    counter = 0
+
+    for simulation_name in simulation:
+        compute_heatmap(cfg, simulation_name, if_crop.get(counter), if_resize.get(counter), if_yue.get(counter),
+                        input_model.get(counter))
+
+        counter += 1

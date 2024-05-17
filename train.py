@@ -12,7 +12,7 @@ from utils.loss import BCEDiceLoss  # Ensure BCEDiceLoss is imported from the co
 from trainmodel.trainer import Trainer  # Ensure Trainer is imported from the correct file
 
 # Set the training hyperparameters
-datadir = "/mnt/c/Unet/new_dataset"
+datadir = "/mnt/c/Unet/new_segmentation_dataset/"
 #datadir = "C:/Users/Linfe/OneDrive/Desktop/Seg/Dataset"
 batch_size = 4
 lr = 0.001
