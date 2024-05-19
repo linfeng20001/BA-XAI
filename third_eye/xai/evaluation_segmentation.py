@@ -120,15 +120,19 @@ def evaluation(model, image_folder_path):
         a = 0
         if a % 2 == 0:
             fig, axs = plt.subplots(1, 2)
-            axs[0].imshow(seg)
+            axs[0].imshow(img)
             axs[0].set_title('Image')
             axs[0].axis('off')
 
             axs[1].imshow(predicted_rgb)
             axs[1].set_title('prediction')
             axs[1].axis('off')
+
+            plt.savefig('/mnt/c/Unet/example of segmentation')
             plt.show()
 
+
+            exit()
         a += 1
 
 
@@ -137,12 +141,12 @@ if __name__ == '__main__':
 
     model = U_Net(3, 2)
     model.to('cpu')
-    checkpoint_path = 'C:/Unet/SegmentationModel_CrossEntropyLoss2.pth'
+    checkpoint_path = '/mnt/c/Unet/SegmentationModel_CrossEntropyLoss38.pth'
     model.load_state_dict(torch.load(checkpoint_path, map_location='cpu'))
     model.eval()
     # "C:\Unet\benchmark-ASE2022\icse20\DAVE2-Track1-DayNight\IMG"
-
-    path = 'C:/Users/Linfe/Downloads/data-ASE2022/benchmark-ASE2022/mutants/udacity_add_weights_regularisation_mutated0_MP_l1_3_1/IMG/'
+    '''
+    path = '/mnt/c/Users/Linfe/Downloads/data-ASE2022/benchmark-ASE2022/mutants/udacity_add_weights_regularisation_mutated0_MP_l1_3_1/IMG/'
     files = os.listdir(path)
     for img in files:
         image = mpimg.imread(os.path.join(path, img))
@@ -164,7 +168,8 @@ if __name__ == '__main__':
         plt.show()
 
     exit()
+    '''
 
-    path = 'C:/Unet/new_segmentation_dataset/test'
+    path = '/mnt/c/Unet/new_segmentation_dataset/test'
 
     evaluation(model, path)

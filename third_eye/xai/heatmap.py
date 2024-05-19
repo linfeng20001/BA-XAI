@@ -37,12 +37,10 @@ def merge(saliency_map, predicted_rgb):
             global_attention += saliency_map_seg[x, y]
             if np.all(predicted_rgb[x, y] == [0, 255, 0]):
                 saliency_map_seg[x, y] = 0
-
-    for x in range(saliency_map.shape[0]):
-        for y in range(saliency_map.shape[1]):
-            if saliency_map_seg[x, y] != 0:
+            else:
                 road_pixel += 1
                 road_attention += saliency_map[x, y]
+
     #In case of ads is crashed
     if road_pixel == 0:
         road_attention_average = 0
@@ -89,7 +87,7 @@ def compute_heatmap(cfg, simulation_name, crop, if_resize, yuv, input_model, att
     model = U_Net(3, 2)
     model.to(device)
 
-    checkpoint_path = 'C:/Unet/temp/SegmentationModel_CrossEntropyLoss12.pth'
+    checkpoint_path = 'C:/Unet/SegmentationModel_CrossEntropyLoss38.pth'
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     model.eval()
     """
@@ -394,3 +392,11 @@ if __name__ == '__main__':
                         input_model.get(counter))
 
         counter += 1
+
+    '''
+    #TESTING data dirc need to change on ood or icse
+    files = os.listdir(cfg.TESTING_DATA_DIR)
+    for simulation_name in files:
+        compute_heatmap(cfg, simulation_name, False, True, True,
+                        'track1-dave2-uncropped-mc-034.h5')
+    '''

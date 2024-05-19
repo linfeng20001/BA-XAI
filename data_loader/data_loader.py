@@ -120,8 +120,8 @@ class Dataset(Dataset):
 
             else:
                 # Resize
-                image = TF.resize(image, size=(256, 512), interpolation=Image.BILINEAR)
-                target = TF.resize(target, size=(256, 512), interpolation=Image.NEAREST)
+                image = TF.resize(image, size=(160, 320), interpolation=Image.BILINEAR)
+                target = TF.resize(target, size=(160, 320), interpolation=Image.NEAREST)
         if self.split == 'val':
             # Also resize for the validation/testing set
             image = TF.resize(image, size=(160, 320), interpolation=Image.BILINEAR)

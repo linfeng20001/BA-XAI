@@ -1,4 +1,6 @@
 import os
+
+import cv2
 import torch
 import random
 # import torchvision.utils as v_utils
@@ -18,18 +20,15 @@ def plot_loss(train_loss, val_loss, save_path):
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
-    #plt.show()
-
+    # plt.show()
     plt.savefig(save_path)
     plt.close()
     return save_path
 
 
-
 def denormalize(tensor):
     mean = [0.485, 0.456, 0.406]
     std = [0.229, 0.224, 0.225]
-    """输入归一化后的张量，返回逆归一化后的张量"""
     dtype = tensor.dtype
     mean = torch.tensor(mean).to(dtype).reshape(1, 3, 1, 1)
     std = torch.tensor(std).to(dtype).reshape(1, 3, 1, 1)
@@ -37,7 +36,7 @@ def denormalize(tensor):
 
 
 class ResultSaver:
-    def __init__(self, result_dir='/mnt/c/Unet/new_dataset/result'):
+    def __init__(self, result_dir='/mnt/c/Unet/segmentation_dataset/result'):
         self.result_dir = result_dir
         # Ensure the result directory exists
         os.makedirs(self.result_dir, exist_ok=True)
@@ -54,7 +53,7 @@ class ResultSaver:
         Save a comparison image with the original, ground truth, and prediction.
         """
         # Convert tensors to PIL images
-        #original_pil = self.tensor_to_pil(rgb_image)
+        # original_pil = self.tensor_to_pil(rgb_image)
         gt_pil = self.tensor_to_pil(ground_truth)
         pred_pil = self.tensor_to_pil(prediction)
 
@@ -83,7 +82,7 @@ class ResultSaver:
 
 class Trainer:
     def __init__(self, model, train_dataloader, val_dataloader, optimizer, loss_func, device,
-                 result_dir='/mnt/c/Unet/new_dataset/result', checkpoint_path='./unet.pkl'):
+                 result_dir='/mnt/c/Unet/segmentation_dataset/result', checkpoint_path='./unet.pkl'):
         self.model = model
         self.train_dataloader = train_dataloader
         self.val_dataloader = val_dataloader
@@ -101,9 +100,11 @@ class Trainer:
         train_loss = 0.0
         for imagergb, labelmask, labelrgb in (tqdm(self.train_dataloader)):
             x, y_ = imagergb.to(self.device), labelmask.to(self.device)
+
             self.optimizer.zero_grad()
             y = self.model(x)
             y_ = torch.squeeze(y_)
+
             loss = self.loss_func(y, y_)
             loss.backward()
             self.optimizer.step()
@@ -127,18 +128,18 @@ class Trainer:
 
     def run(self, epochs):
         best_val_loss = float('inf')
-        patience = 5
+        patience = 10
         result_saver = ResultSaver(self.result_dir)
         train_loss = []
         val_loss = []
 
         for epoch in range(epochs):
             train_loss.append(self.train_epoch())
+
             val_loss.append(self.validate_epoch())
 
-
             print(f"Epoch {epoch}, Train Loss: {train_loss[epoch]}, Validation Loss: {val_loss[epoch]}")
-            #self.save_checkpoint()
+            # self.save_checkpoint()
 
             # Select a batch of data from the validation set
             val_iter = iter(self.val_dataloader)
@@ -173,50 +174,31 @@ class Trainer:
 
             mask_rgb = self.train_dataloader.dataset.class_to_rgb(mask.squeeze(0)).to(self.device)
             pred_rgb = pred_rgb[0]
-            comparison_path = result_saver.save_comparison(image, mask_rgb.cpu(), pred_rgb.cpu(), epoch, idx)
-            print(f"Saved comparison image at {comparison_path}")
+            #comparison_path = result_saver.save_comparison(image, mask_rgb.cpu(), pred_rgb.cpu(), epoch, idx)
+            #print(f"Saved comparison image at {comparison_path}")
 
             comparison_path_loss = f"{self.result_dir}/comparison_{epoch}.png"
             comparison_path = plot_loss(train_loss, val_loss, comparison_path_loss)
             print(f"Saved loss comparison image at {comparison_path}")
 
-
-
             # Check for early stopping
-            current_val_loss = val_loss[-1]
-            if current_val_loss < best_val_loss:
-                best_val_loss = current_val_loss
-                patience_counter = 0
-                torch.save(self.model.state_dict(), 'SegmentationModel.pth')  # Save the best model
-            else:
-                patience_counter += 1
-                if patience_counter >= patience:
-                    print("Early stopping!")
-                    print(epoch)
-                    torch.save(self.model.state_dict(), 'SegmentationModel.pth')  # Save the best model
-                    break
+            epoch_str = str(epoch)
 
-        torch.save(self.model.state_dict(), 'SegmentationModel.pth')  # Save the best model
+            torch.save(self.model.state_dict(), 'SegmentationModel_CrossEntropyLoss' + epoch_str + '.pth')
+        # torch.save(self.model.state_dict(), 'SegmentationModel.pth')  # Save latest model
         plot_loss(train_loss, val_loss, comparison_path_loss)
 
-
 if __name__ == '__main__':
-    train_loss = []
-    train_loss.append(1.2)
-    train_loss.append(4.7)
-    train_loss.append(8.2)
-    train_loss.append(9)
+    #preprocess the udacity2 dataset
+    datadir = '/mnt/c/Unet/new_segmentation_dataset/labels/temp'
+    for filename in os.listdir(datadir):
+        if filename.endswith(".png") or filename.endswith(".jpg"):  # Assuming images are PNG or JPG
+            # Read the image
+            image_path = os.path.join(datadir, filename)
+            image = cv2.imread(image_path)
 
-    val_loss = []
-    val_loss.append(0.2)
-    val_loss.append(2.7)
-    val_loss.append(4.2)
-    val_loss.append(5)
+            # Replace color [0,0,0] with [0,255,0]
+            image[(image == [0, 0, 0]).all(axis=2)] = [0, 255, 0]
 
-    result_dir = '/mnt/c/Unet/new_dataset/result'
-    comparison_path_loss = f"{result_dir}/comparison.png"
-    comparison_path = plot_loss(train_loss, val_loss, comparison_path_loss)
-
-
-
-
+            # Save the modified image
+            cv2.imwrite(image_path, image)
