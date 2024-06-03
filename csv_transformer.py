@@ -6,7 +6,7 @@ from PIL import Image
 def csv_transformer_png(input_file, output_file):
     # Define the column headers
 
-    column_headers = ["center", "left", "right", "steering", "throttle", "brake", "speed"]
+    column_headers = ["center,left,right,steering,throttle,brake,speed"]
 
     # Open the input and output files
     with open(input_file, 'r') as f_in, open(output_file, 'w', newline='') as f_out:
@@ -23,7 +23,7 @@ def csv_transformer_png(input_file, output_file):
         for row in reader:
             # Update file paths in the first three columns
             updated_row = [
-                col.replace("C:\\Unet\\track1\\normal3\\IMG\\", "/mnt/c/Unet/track1/normal3/IMG/") if i < 3 else col for
+                col.replace("C:\\Unet\\track2\\normal2\\IMG\\", "/mnt/c/Unet/track2/normal2/IMG/") if i < 3 else col for
                 i, col
                 in enumerate(row)]
             # Write the updated row to the output CSV file
@@ -136,8 +136,23 @@ def convert_png_to_jpg(input_folder):
     print("Conversion complete.")
 
 '''
+def compress(input_file, output_file):
+
+    with open(input_file, newline='') as csvfile:
+        csv_reader = csv.reader(csvfile, delimiter=',')
+        data_array = [",".join(row) for row in csv_reader]
+
+    # Daten in eine neue CSV-Datei schreiben
+    with open(input_file, 'w', newline='') as csvfile:
+        csv_writer = csv.writer(csvfile)
+        for data in data_array:
+            csv_writer.writerow([data])
+
+    csv_transformer_png(input_file, output_file)
+
 
 if __name__ == '__main__':
-    input_path_csv = "/mnt/c/Unet/track1/normal3/driving_log_Linux.csv"
-    output_path_csv = "/mnt/c/Unet/track1/normal3/driving_log.csv"
-    transform(input_path_csv, output_path_csv)
+    input_path_csv = "/mnt/c/Unet/track2/normal2/driving_log_Linux.csv"
+    output_path_csv = "/mnt/c/Unet/track2/normal2/driving_log.csv"
+    #transform(input_path_csv, output_path_csv)
+    compress(input_path_csv,output_path_csv)

@@ -27,8 +27,8 @@ from third_eye.config import *
 from model2 import U_Net
 
 import pandas as pd
-
 def preprocessForSegmentation(img):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     '''
     This function turning the input image into Unet model acceptable form
     '''
@@ -38,7 +38,7 @@ def preprocessForSegmentation(img):
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
     image = normalize(image)
-    image = image.to('cpu')
+    image = image.to(device)
     image = image.unsqueeze(0)
     return image
 
@@ -103,7 +103,7 @@ def score_when_decrease(output):
 
 def compute_heatmap(cfg, simulation_name, crop, if_resize, yuv, input_model, condition, attention_type="SmoothGrad"):
     # prepare segmentation model
-    device = 'cpu'  # torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = U_Net(3, 2)
     model.to(device)
 
@@ -189,7 +189,7 @@ def compute_heatmap(cfg, simulation_name, crop, if_resize, yuv, input_model, con
 
     path_save_heatmaps_seg = os.path.join(cfg.TESTING_DATA_DIR,
                                           simulation_name,
-                                          attention_type + '-segmentation',
+                                          'segmentation-' + attention_type,
                                           "IMG")
 
     if os.path.exists(path_save_heatmaps_seg):
@@ -220,7 +220,7 @@ def compute_heatmap(cfg, simulation_name, crop, if_resize, yuv, input_model, con
 
         predicted_rgb = torch.zeros((3, prediction.size()[2], prediction.size()[3])).to(device)
         maxindex = torch.argmax(prediction[0], dim=0).cpu().int()
-        predicted_rgb = class_to_rgb(maxindex).to(device)
+        predicted_rgb = class_to_rgb(maxindex).to('cpu')
         predicted_rgb = predicted_rgb.squeeze().permute(1, 2, 0).numpy()
 
         if crop:
@@ -324,7 +324,6 @@ def compute_heatmap(cfg, simulation_name, crop, if_resize, yuv, input_model, con
         # store for seg avg
         avg_gradient_heatmaps_seg.append(average_gradient_seg)
 
-        break
     # save scores as numpy arrays
     file_name = "htm-" + attention_type.lower() + '-scores'
     path_name = os.path.join(cfg.TESTING_DATA_DIR,
@@ -389,14 +388,17 @@ def compute_heatmap(cfg, simulation_name, crop, if_resize, yuv, input_model, con
                              simulation_name,
                              'plot-' + file_name + '-avg-grad.png')
     plt.savefig(path_name)
+    plt.close()
     #
     # TODO
 
+    '''
     # seg part
     path_name = os.path.join(cfg.TESTING_DATA_DIR,
                              simulation_name,
                              file_name + '-avg-grad_seg')
     np.save(path_name, avg_gradient_heatmaps_seg)
+    '''
 
     # save as csv
     df = pd.DataFrame(list_of_image_paths, columns=['center'])
@@ -452,7 +454,7 @@ def compute_heatmap(cfg, simulation_name, crop, if_resize, yuv, input_model, con
     # save it as a separate csv
     df.to_csv(os.path.join(cfg.TESTING_DATA_DIR,
                            simulation_name,
-                           attention_type + '-segmentation',
+                           'segmentation-' + attention_type,
                            'driving_log.csv'), index=False)
 
 
@@ -460,7 +462,7 @@ if __name__ == '__main__':
     print(os.getcwd())
 
     cfg = Config()
-    cfg.from_pyfile(filename="/mnt/c/Unet/ThirdEye/ase22/config_my.py")
+    cfg.from_pyfile(filename="./third_eye/config_my.py")
 
     path = '/home/xchen/Documents/linfeng/BA-XAI/dataset/dave2_models/models.csv'
 
@@ -503,7 +505,7 @@ if __name__ == '__main__':
         condition_files = os.listdir(condition_path)
         for sim in condition_files:
             for attention_type in ["Faster-ScoreCAM", "SmoothGrad"]:
-                print(f"heatmap: {attention_type}, simulation_name: {condition}")
+                print(f"heatmap: {attention_type}, simulation_name: {condition + '/' + sim}")
                 compute_heatmap(cfg, simulation_name=condition + '/' + sim,
                                 crop=False,
                                 if_resize=True,
@@ -511,4 +513,3 @@ if __name__ == '__main__':
                                 input_model='track1-dave2-uncropped-mc-034',
                                 condition=condition,
                                 attention_type=attention_type)
-

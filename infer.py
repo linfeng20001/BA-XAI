@@ -1,7 +1,7 @@
 import torch
 from models.model import Unet
 from torchvision import transforms
-from data_loader.data_loader import CityscapesDataset
+from data_loader.data_loader import Dataset
 from utils.visualize import Visualizer  # Ensure this is correctly imported
 from PIL import Image
 import numpy as np
@@ -96,7 +96,7 @@ model.to(device)
 checkpoint_path = '/mnt/c/Unet/unet.pkl'
 model.load_state_dict(torch.load(checkpoint_path, map_location=device))
 model.eval()
-#"C:\Unet\new_dataset\images\train\center_2024_03_01_13_46_05_282.png"
+# "C:\Unet\new_dataset\images\train\center_2024_03_01_13_46_05_282.png"
 # Path to the image you want to use for inference
 image_path = '/mnt/c/Unet/new_dataset/images/train/center_2024_03_01_13_46_05_282.png'
 mask_path = '/mnt/c/Unet/new_dataset/labels/train/road_2024_03_01_13_46_05_282.png'
@@ -106,7 +106,6 @@ target = Image.open(mask_path).convert('L')
 original_image = TF.resize(original_image, size=(256, 512), interpolation=Image.BILINEAR)
 target = TF.resize(target, size=(256, 512), interpolation=Image.NEAREST)
 
-# 将图像和目标转换为PyTorch张量
 image = TF.to_tensor(original_image)
 target = torch.from_numpy(np.array(target, dtype=np.uint8))
 

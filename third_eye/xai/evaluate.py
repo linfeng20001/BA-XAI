@@ -4,15 +4,23 @@ from ThirdEye.ase22.utils import *
 # (cfg, heatmap_type, simulation_name, summary_type, aggregation_method, condition)
 
 if __name__ == '__main__':
-    heatmap_type = 'smoothgrad'
-    cfg = Config()
-    cfg.from_pyfile(filename="C:/Unet/ThirdEye/ase22/config_my.py")  # "/mnt/c/Unet/ThirdEye/ase22/config_my.py"
-    # cfg.from_pyfile(filename="C:/Unet/ThirdEye/ase22/config_my.py")
-    # simulation_name = 'mutants/udacity_add_weights_regularisation_mutated0_MP_l1_3_1'
-    simulation_name = 'mutants/udacity_add_weights_regularisation_mutated0_MP_l1_3_1'
-        #"xai-track1-fog-20"
-    # for st in ['-avg', '-avg_withSeg']
 
-    for st in ['-avg']:
-        for am in ['mean', 'max']:
-            eva.evaluate_failure_prediction(cfg, heatmap_type, simulation_name, st, am, 'mutants')  # mutants
+    cfg = Config()
+    # cfg.from_pyfile(filename="/mnt/c/Unet/ThirdEye/ase22/config_my.py")  # ""
+    cfg.from_pyfile(filename="C:/Unet/ThirdEye/ase22/config_my.py")
+
+    # for normal
+    segmentation = True
+    for ht in ['smoothgrad']:  # for normal remove faster-scorecam, 'faster-scorecam'
+        for condition in ['icse20', 'mutants', 'ood']:  # ,
+            condition_path = os.path.join(cfg.TESTING_DATA_DIR, condition)
+            condition_files = os.listdir(condition_path)
+            for simulation_name in condition_files:
+                for st in ['-avg-grad', '-avg_road_attention_percentage',
+                           '-total_road_attention_percentage']:  #'-avg',
+                    for am in ['mean', 'max']:
+                        print(condition + '/' + simulation_name)
+                        eva.evaluate_failure_prediction(cfg=cfg, heatmap_type=ht,
+                                                        simulation_name=condition + '/' + simulation_name,
+                                                        summary_type=st, aggregation_method=am, condition=condition,
+                                                        segmentation=segmentation)  # mutants

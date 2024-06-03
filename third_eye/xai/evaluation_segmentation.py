@@ -85,8 +85,11 @@ def result(predicted_rgb, seg):
 def evaluation(model, image_folder_path):
     files = os.listdir(image_folder_path)
     img_files = [f for f in files if f.startswith('image')]
-
+    a = 0
+    accuracy = []
     for img_file in img_files:
+        a += 1
+        print(a)
         img_path = os.path.join(image_folder_path, img_file)
 
         img = mpimg.imread(img_path)
@@ -104,21 +107,17 @@ def evaluation(model, image_folder_path):
         maxindex = torch.argmax(prediction[0], dim=0).cpu().int()
         predicted_rgb = class_to_rgb(maxindex).to('cpu')
         predicted_rgb = predicted_rgb.squeeze().permute(1, 2, 0).numpy()
+
+
+
+
+
+
+        #print(result(predicted_rgb, seg))
+        accuracy.append(result(predicted_rgb, seg))
         '''
-        for y in range(seg.shape[0]):
-            for x in range(seg.shape[1]):
-                if np.all(seg[y, x] == [0,1,0]):
-                    seg[y, x] = [1,255,0]
-                elif np.all(seg[y, x] == [0,0,1]):
-                    seg[y, x] = [1, 0, 255]
-        '''
-
-        #print(pixelwise_accuracy(predicted_rgb,seg))
-
-        print(result(predicted_rgb, seg))
-
         a = 0
-        if a % 2 == 0:
+        if a % 10:
             fig, axs = plt.subplots(1, 2)
             axs[0].imshow(img)
             axs[0].set_title('Image')
@@ -132,16 +131,32 @@ def evaluation(model, image_folder_path):
             plt.show()
 
 
-            exit()
-        a += 1
 
+        a += 1
+        '''
+
+
+    np.save('/mnt/c/Unet/segmentation_dataset/hard_test_result', accuracy)
+    plt.hist(accuracy)
+    plt.title("average attention heatmaps")
+
+    plt.savefig('/mnt/c/Unet/segmentation_dataset/hard_test_result.png')
 
 if __name__ == '__main__':
+    array_path = '/mnt/c/Unet/segmentation_dataset/hard_test_result.npy'
+    array = np.load(array_path)
+
+    # Calculate the average value of the array
+    average_value = np.mean(array)
+
+    print(f"The average value of the array is: {average_value}")
+
+    exit()
     import os
 
     model = U_Net(3, 2)
     model.to('cpu')
-    checkpoint_path = '/mnt/c/Unet/SegmentationModel_CrossEntropyLoss38.pth'
+    checkpoint_path = '/mnt/c/Unet/segModels/SegmentationModel_CrossEntropyLoss38.pth'
     model.load_state_dict(torch.load(checkpoint_path, map_location='cpu'))
     model.eval()
     # "C:\Unet\benchmark-ASE2022\icse20\DAVE2-Track1-DayNight\IMG"
@@ -170,6 +185,6 @@ if __name__ == '__main__':
     exit()
     '''
 
-    path = '/mnt/c/Unet/new_segmentation_dataset/test'
+    path = '/mnt/c/Unet/segmentation_dataset/test'
 
     evaluation(model, path)
