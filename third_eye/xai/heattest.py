@@ -375,7 +375,6 @@ def compute_heatmap(cfg, simulation_name, crop, if_resize, yuv, input_model, con
                              simulation_name,
                              'plot-' + file_name + '-avg_road_attention_percentage.png')
     plt.savefig(path_name)
-    # TODO
     plt.close()
     #########################################################################################
 
@@ -477,7 +476,7 @@ if __name__ == '__main__':
     input_model = model_df["treated_as"]
     counter = 0
 
-    '''
+
     for condition in ['gauss-journal-track1-nominal']:  
         for attention_type in ["Faster-ScoreCAM", "SmoothGrad"]:
             condition_path = os.path.join(cfg.TESTING_DATA_DIR, condition)
@@ -491,7 +490,7 @@ if __name__ == '__main__':
                                 input_model='track1-dave2-uncropped-mc-034', 
                                 condition=condition, 
                                 attention_type=attention_type)
-'''
+
 
     for simulation_name in simulation:
         for attention_type in ["Faster-ScoreCAM", "SmoothGrad"]: #"SmoothGrad",  "Faster-ScoreCAM", "GradCam++"
@@ -502,7 +501,7 @@ if __name__ == '__main__':
                             input_model.get(counter)[:-3], '', attention_type=attention_type)
 
         counter += 1
-    '''
+
     for condition in ['ood', 'icse20']:
         condition_path = os.path.join(cfg.TESTING_DATA_DIR, condition)
         condition_files = os.listdir(condition_path)
@@ -516,4 +515,3 @@ if __name__ == '__main__':
                                 input_model='track1-dave2-uncropped-mc-034',
                                 condition=condition,
                                 attention_type=attention_type)
-    '''

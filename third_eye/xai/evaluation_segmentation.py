@@ -6,6 +6,7 @@ import torchvision.transforms.functional as TF
 from torchvision import transforms
 import numpy as np
 from ThirdEye.ase22.utils import resize
+import os
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 mapping = {
@@ -21,17 +22,18 @@ mappingrgb = {
 def pixelwise_accuracy(img, seg):
     assert img.shape == seg.shape, "Images must have the same shape"
 
-# Flatten images to 1D arrays
+    # Flatten images to 1D arrays
     img_flat = img.ravel()
     seg_flat = seg.ravel()
 
-# Count pixels that match
+    # Count pixels that match
     correct_pixels = np.sum(img_flat == seg_flat)
 
-# Calculate accuracy
+    # Calculate accuracy
     accuracy = correct_pixels / len(img_flat)
 
     return accuracy
+
 
 def class_to_rgb(mask):
     '''
@@ -79,7 +81,7 @@ def result(predicted_rgb, seg):
                 correct_prediction += 1
             elif np.array_equal(predicted_rgb[y, x], [1, 0, 255]) and np.array_equal(seg[y, x], [0, 0, 1]):
                 correct_prediction += 1
-    return correct_prediction / all_pixel*100
+    return correct_prediction / all_pixel * 100
 
 
 def evaluation(model, image_folder_path):
@@ -98,7 +100,6 @@ def evaluation(model, image_folder_path):
         segmentation_path = os.path.join(image_folder_path, segmentation_name)
         seg = mpimg.imread(segmentation_path)
 
-
         x = preprocess(img)
         with torch.no_grad():
             prediction = model(x)
@@ -108,14 +109,9 @@ def evaluation(model, image_folder_path):
         predicted_rgb = class_to_rgb(maxindex).to('cpu')
         predicted_rgb = predicted_rgb.squeeze().permute(1, 2, 0).numpy()
 
-
-
-
-
-
-        #print(result(predicted_rgb, seg))
+        # print(result(predicted_rgb, seg))
         accuracy.append(result(predicted_rgb, seg))
-        '''
+
         a = 0
         if a % 10:
             fig, axs = plt.subplots(1, 2)
@@ -130,8 +126,6 @@ def evaluation(model, image_folder_path):
             plt.savefig('/mnt/c/Unet/example of segmentation')
             plt.show()
 
-
-
         a += 1
         '''
 
@@ -141,8 +135,11 @@ def evaluation(model, image_folder_path):
     plt.title("average attention heatmaps")
 
     plt.savefig('/mnt/c/Unet/segmentation_dataset/hard_test_result.png')
+'''
+
 
 if __name__ == '__main__':
+    '''for caculate evaluation 
     array_path = '/mnt/c/Unet/segmentation_dataset/hard_test_result.npy'
     array = np.load(array_path)
 
@@ -152,39 +149,82 @@ if __name__ == '__main__':
     print(f"The average value of the array is: {average_value}")
 
     exit()
-    import os
+    '''
+
+
+    
 
     model = U_Net(3, 2)
     model.to('cpu')
     checkpoint_path = '/mnt/c/Unet/segModels/SegmentationModel_CrossEntropyLoss38.pth'
-    model.load_state_dict(torch.load(checkpoint_path, map_location='cpu'))
+    model.load_state_dict(torch.load(checkpoint_path, map_location='cuda'))
     model.eval()
-    # "C:\Unet\benchmark-ASE2022\icse20\DAVE2-Track1-DayNight\IMG"
-    '''
-    path = '/mnt/c/Users/Linfe/Downloads/data-ASE2022/benchmark-ASE2022/mutants/udacity_add_weights_regularisation_mutated0_MP_l1_3_1/IMG/'
-    files = os.listdir(path)
-    for img in files:
-        image = mpimg.imread(os.path.join(path, img))
-
-        plt.imshow(image)
-        plt.show()
-        image = preprocess(image)
-        with torch.no_grad():
-            prediction = model(image)
-
-        predicted_rgb = torch.zeros((3, prediction.size()[2], prediction.size()[3])).to('cpu')
-        maxindex = torch.argmax(prediction[0], dim=0).cpu().int()
-        predicted_rgb = class_to_rgb(maxindex).to('cpu')
-        predicted_rgb = predicted_rgb.squeeze().permute(1, 2, 0).numpy()
 
 
+    # For generate example
+    path = '/mnt/c/Users/Linfe/Downloads/data-ASE2022/benchmark-ASE2022/mutants/udacity_change_label_mutated0_MP_12.5_4/IMG/2022_04_21_17_00_47_568.jpg'
 
-        plt.imshow(predicted_rgb)
-        plt.show()
+    image = mpimg.imread(path)
+
+    img = image
+    image = preprocess(image)
+    with torch.no_grad():
+        prediction = model(image)
+
+    predicted_rgb = torch.zeros((3, prediction.size()[2], prediction.size()[3])).to('cpu')
+    maxindex = torch.argmax(prediction[0], dim=0).cpu().int()
+    predicted_rgb = class_to_rgb(maxindex).to('cpu')
+    predicted_rgb = predicted_rgb.squeeze().permute(1, 2, 0).numpy()
+
+    fig, axs = plt.subplots(1, 2)
+    plt.tight_layout()
+    axs[0].imshow(img)
+    axs[0].axis('off')
+
+    axs[1].imshow(predicted_rgb)
+    axs[1].axis('off')
+
+    plt.savefig('/mnt/c/Unet/fail side normal.svg', bbox_inches='tight')
+
+    plt.show()
 
     exit()
+
     '''
 
+    path = 'C:/Users/Linfe/Downloads/data-ASE2022/benchmark-ASE2022/ood/xai-track1-fog-10'
+
+    img_files_path = os.path.join(path, 'IMG')
+    img_files = os.listdir(img_files_path)
+    for img in img_files:
+        img_path = os.path.join(img_files_path, img)
+        image = mpimg.imread(img_path)
+
+        sm_path = os.path.join(path, 'heatmaps-smoothgrad', 'IMG', 'htm-smoothgrad-' + img)
+        fc_path = os.path.join(path, 'heatmaps-faster-scorecam', 'IMG', 'htm-faster-scorecam-' + img)
+
+        sm = mpimg.imread(sm_path)
+        fc = mpimg.imread(fc_path)
+
+        fig, axs = plt.subplots(1, 3)
+        axs[0].imshow(image)
+        axs[0].set_title('Image')
+        axs[0].axis('off')
+
+        axs[1].imshow(sm)
+        axs[1].set_title('prediction')
+        axs[1].axis('off')
+
+        axs[2].imshow(fc)
+        axs[2].set_title('prediction')
+        axs[2].axis('off')
+
+        plt.show()
+
+    '''
+
+    '''
     path = '/mnt/c/Unet/segmentation_dataset/test'
 
     evaluation(model, path)
+    '''
